@@ -197,8 +197,6 @@
 
         #preview-canvas {
             display: block;
-            max-width: 100%;
-            max-height: calc(100vh - 200px);
             background: #333;
         }
 
@@ -477,7 +475,7 @@
                             <circle cx="8.5" cy="8.5" r="1.5"/>
                             <polyline points="21 15 16 10 5 21"/>
                         </svg>
-                        <p>Upload PNG or JPEG files to get started</p>
+                        <p>Upload PNG or JPEG files to get started. V1.1</p>
                     </div>
                     <canvas id="preview-canvas" style="display: none;"></canvas>
                     <div class="crop-overlay" id="crop-overlay" style="display: none;">
@@ -659,12 +657,12 @@
             
             // Initialize or restore crop box
             if (photo.crop) {
-                // Convert from original image coordinates back to display coordinates
+                // Convert from ratios back to display coordinates
                 cropBox = {
-                    x: photo.crop.x * displayScale,
-                    y: photo.crop.y * displayScale,
-                    width: photo.crop.width * displayScale,
-                    height: photo.crop.height * displayScale
+                    x: photo.crop.xRatio * previewCanvas.width,
+                    y: photo.crop.yRatio * previewCanvas.height,
+                    width: photo.crop.widthRatio * previewCanvas.width,
+                    height: photo.crop.heightRatio * previewCanvas.height
                 };
             } else {
                 initializeCropBox();
@@ -772,10 +770,13 @@
             cropBoxEl.style.height = cropBox.height + 'px';
             
             // Update dimensions display (in original image pixels)
-            const origWidth = Math.round(cropBox.width / displayScale);
-            const origHeight = Math.round(cropBox.height / displayScale);
-            document.getElementById('crop-dimensions').textContent = 
-                `Crop: ${origWidth} × ${origHeight} px`;
+            if (currentIndex >= 0) {
+                const photo = photos[currentIndex];
+                const origWidth = Math.round((cropBox.width / previewCanvas.width) * photo.originalImage.width);
+                const origHeight = Math.round((cropBox.height / previewCanvas.height) * photo.originalImage.height);
+                document.getElementById('crop-dimensions').textContent = 
+                    `Crop: ${origWidth} × ${origHeight} px`;
+            }
         }
 
         // Set aspect ratio
@@ -930,13 +931,15 @@
             if (currentIndex < 0) return;
             
             const photo = photos[currentIndex];
+            const canvasWidth = previewCanvas.width;
+            const canvasHeight = previewCanvas.height;
             
-            // Save crop in original image coordinates
+            // Save crop as ratios (0-1) of the original image dimensions
             photo.crop = {
-                x: cropBox.x / displayScale,
-                y: cropBox.y / displayScale,
-                width: cropBox.width / displayScale,
-                height: cropBox.height / displayScale
+                xRatio: cropBox.x / canvasWidth,
+                yRatio: cropBox.y / canvasHeight,
+                widthRatio: cropBox.width / canvasWidth,
+                heightRatio: cropBox.height / canvasHeight
             };
             
             photo.edited = true;
@@ -1008,13 +1011,21 @@
                 document.getElementById('download-status').textContent = 
                     `Processing ${i + 1}/${editedPhotos.length}: ${photo.name}`;
                 
+                // Convert ratios to original image pixel coordinates
+                const origWidth = photo.originalImage.width;
+                const origHeight = photo.originalImage.height;
+                const cropX = Math.round(photo.crop.xRatio * origWidth);
+                const cropY = Math.round(photo.crop.yRatio * origHeight);
+                const cropW = Math.round(photo.crop.widthRatio * origWidth);
+                const cropH = Math.round(photo.crop.heightRatio * origHeight);
+                
                 // Create full-resolution canvas
                 const canvas = document.createElement('canvas');
                 const ctx = canvas.getContext('2d');
                 
                 // Set canvas to crop dimensions
-                canvas.width = Math.round(photo.crop.width);
-                canvas.height = Math.round(photo.crop.height);
+                canvas.width = cropW;
+                canvas.height = cropH;
                 
                 // Draw cropped and adjusted image
                 const tempCanvas = document.createElement('canvas');
@@ -1048,10 +1059,10 @@
                 // Draw cropped region to final canvas
                 ctx.drawImage(
                     tempCanvas,
-                    Math.round(photo.crop.x),
-                    Math.round(photo.crop.y),
-                    Math.round(photo.crop.width),
-                    Math.round(photo.crop.height),
+                    cropX,
+                    cropY,
+                    cropW,
+                    cropH,
                     0,
                     0,
                     canvas.width,
