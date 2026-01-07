@@ -192,8 +192,7 @@
 
         .canvas-wrapper {
             position: relative;
-            max-width: 100%;
-            max-height: 100%;
+            display: inline-block;
         }
 
         #preview-canvas {
@@ -207,8 +206,6 @@
             position: absolute;
             top: 0;
             left: 0;
-            right: 0;
-            bottom: 0;
             pointer-events: none;
         }
 
@@ -662,7 +659,13 @@
             
             // Initialize or restore crop box
             if (photo.crop) {
-                cropBox = { ...photo.crop };
+                // Convert from original image coordinates back to display coordinates
+                cropBox = {
+                    x: photo.crop.x * displayScale,
+                    y: photo.crop.y * displayScale,
+                    width: photo.crop.width * displayScale,
+                    height: photo.crop.height * displayScale
+                };
             } else {
                 initializeCropBox();
             }
