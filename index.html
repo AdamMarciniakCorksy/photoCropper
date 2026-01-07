@@ -456,9 +456,9 @@
         <!-- Main Editor -->
         <div class="main-area">
             <div class="toolbar">
-                <input type="file" id="file-input" accept="image/png" multiple>
+                <input type="file" id="file-input" accept="image/png,image/jpeg,image/jpg" multiple>
                 <button class="upload-btn" onclick="document.getElementById('file-input').click()">
-                    Upload PNGs
+                    Upload Images
                 </button>
                 <div class="toolbar-divider"></div>
                 <button class="confirm-btn" id="confirm-btn" onclick="confirmCurrentEdit()">
@@ -480,7 +480,7 @@
                             <circle cx="8.5" cy="8.5" r="1.5"/>
                             <polyline points="21 15 16 10 5 21"/>
                         </svg>
-                        <p>Upload PNG files to get started</p>
+                        <p>Upload PNG or JPEG files to get started</p>
                     </div>
                     <canvas id="preview-canvas" style="display: none;"></canvas>
                     <div class="crop-overlay" id="crop-overlay" style="display: none;">
@@ -584,7 +584,7 @@
         fileInput.addEventListener('change', (e) => {
             const files = Array.from(e.target.files);
             files.forEach(file => {
-                if (file.type === 'image/png') {
+                if (file.type === 'image/png' || file.type === 'image/jpeg') {
                     const reader = new FileReader();
                     reader.onload = (event) => {
                         const img = new Image();
